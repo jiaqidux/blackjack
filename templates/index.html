@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Blackjack
+{% endblock %}
+
+{% block main %}
+<main class="game-layout">
+
+        <div class="message"></div>
+
+    <div class="table-container">
+
+        <div class="game-board">
+
+            <div class="dealer-container">
+                <div class="dealer-hand-container">
+                    <h3>Dealer: 0</h3>
+                    <div class="dealer-hand"></div>
+                </div>
+
+            </div>
+
+            <div class="player-container">
+
+                <div class="player-hand-0-container">
+                    <h3 class="title-hand-0"></h3>
+                    <div class="player-hand-0"></div>
+                </div>
+
+                <div class="player-hand-1-container" hidden>
+                    <h3 class="title-hand-1"></h3>
+                    <div class="player-hand-1"></div>
+                </div>
+
+            </div>
+
+            <div class="button-container">
+                <div class="deal-action-container">
+                    <button class="deal">Deal</button>
+                    <button id="hintToggle" class="hint-toggle-button">Hints: OFF</button>
+                </div>
+
+                <div class="action-button-container">
+                    <button id="doubleButton" class="double">Double</button>
+                    <button id="hitButton" class="hit">Hit</button>
+                    <button id="standButton" class="stand">Stand</button>
+                    <button id="splitButton" class="split">Split</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bet-container">
+        <div class="balance">Balance:<br>$2500</div>
+
+        <div class="chips-container">
+            <button class="chip chip-1" data-value="1"></button>
+            <button class="chip chip-5" data-value="5"></button>
+            <button class="chip chip-10" data-value="10"></button>
+            <button class="chip chip-25" data-value="25"></button>
+            <button class="chip chip-100" data-value="100"></button>
+        </div>
+
+        <div class="bet-block">
+            <button class="undo"></button>
+            <div class="bet">Bet:<br>$0</div>
+        </div>
+    </div>
+</main>
+<script src="/static/index.js"></script>
+{% endblock %}

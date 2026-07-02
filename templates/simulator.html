@@ -1,0 +1,217 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Simulator
+{% endblock %}
+
+{% block main %}
+<main>
+    <div class="simulation-info">
+        <h2>Blackjack Strategy Simulator</h2>
+        <p>
+            This tool simulates thousands of blackjack hands to compare three playing strategies over time: the Optimal Strategy (following the strategy tables),
+            the Dealer's Strategy (hitting below 17, standing otherwise), and a Random Strategy (choosing actions arbitrarily)
+        </p>
+        <p>To evaluate their performance, the simulation tracks two main metrics:</p>
+        <ul>
+            <li>Wins, loses, and draws, recorded on a per-round basis.</li>
+            <li>Net Units, to represent the running profit or loss measured in base bet units, showing long-term performance independent of bet size.</li>
+        </ul>
+        <p>
+            As expected, even the Optimal Strategy shows a slight long-term loss due to the house edge.
+            However, it consistently outperforms the Dealer's and Random strategies, demonstrating that mathematically optimal play minimizes losses over time.
+        </p>
+    </div>
+    <div class="simulation-container">
+        <div class="input-container">
+            <label for="NInput">Number of rounds: </label>
+            <input type="number" id="NInput" value="300" min="1" max="20000" >
+        </div>
+        <button class="run-button" id="runButton">Run Simulator</button>
+        <p class="loading-text" id="loadingText">Running simulator...</p>
+
+        <div class="simulation-results">
+            <div class="chart-block">
+                <h3>Units Evolution</h3>
+                <canvas id="evolutionChart"></canvas>
+            </div>
+
+            <div class="chart-block">
+                <h3>Final Results</h3>
+                <canvas id="resultsChart"></canvas>
+            </div>
+
+            <div class="chart-block">
+                <h3>Numerical Analysis</h3>
+                <table class="summary-table" id="ResultsTable">
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>Wins</th>
+                            <th>Loses</th>
+                            <th>Draws</th>
+                            <th>Net Units</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+<script>
+const cssFont = window.getComputedStyle(document.body).fontFamily;
+
+let evolutionChart = null;
+let resultsChart = null;
+
+const strategyColors = {
+    optimal: "#35bd86",
+    random: "#fe4c40",
+    dealer: "#0093ff"
+};
+
+const strategyLabels = {
+    optimal: "Optimal Strategy",
+    random: "Random",
+    dealer: "Dealer's Strategy"
+};
+
+document.getElementById("runButton").addEventListener("click", runSimulator);
+
+async function runSimulator() {
+    const btn = document.getElementById("runButton");
+    const loadingText = document.getElementById("loadingText");
+    const numHands = document.getElementById("NInput").value;
+    const resultsContainer = document.querySelector(".simulation-results");
+
+    btn.disabled = true;
+    loadingText.style.display = "block";
+
+    try {
+        const response = await fetch(`/simulate?N=${numHands}`);
+        const data = await response.json();
+        resultsContainer.style.display = "block";
+        renderEvolutionChart(data);
+        renderResultsChart(data);
+        renderResultsTable(data);
+    } catch (err) {
+        console.error("Error when running simulator", err);
+        alert("Error when runnin simulator. See console");
+    } finally {
+        btn.disabled = false;
+        loadingText.style.display = "none";
+    }
+}
+
+function renderEvolutionChart(data) {
+    const ctx = document.getElementById("evolutionChart");
+
+    const numRounds = data.optimal.history.length;
+    const labels = Array.from({length: numRounds}, (_, i) => i + 1);
+
+    const datasets = Object.keys(strategyLabels).map(key => ({
+        label: strategyLabels[key],
+        data: data[key].history,
+        borderColor: strategyColors[key],
+        backgroundColor: strategyColors[key],
+        fill: false,
+        pointRadius: 0,
+        borderWidth: 2
+    }));
+
+    if (evolutionChart) evolutionChart.destroy();
+
+    evolutionChart = new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: { display: true, text: "Number of Rounds", color: "#daa520", font: { family: cssFont, size: 16 } },
+                    ticks: { color: "white", maxTicksLimit: 10, font: { family: cssFont, size: 14 } },
+                    grid: { color: "#1a4d3a", lineWdith: 2}
+                },
+                y: {
+                    title: { display: true, text: "Units", color: "#daa520", font: { family: cssFont, size: 16 } },
+                    ticks: { color: "white", font: { family: cssFont, size: 14 } },
+                    grid: { color: "#1a4d3a", lineWdith: 2}
+                }
+            },
+            plugins: {
+                legend: { labels: { color: "white", font: { family: cssFont, size: 14 }}}
+            }
+        }
+    });
+}
+
+function renderResultsChart(data) {
+    const ctx = document.getElementById("resultsChart");
+    const strategies = Object.keys(strategyLabels);
+
+    const datasets = ["Wins", "Loses", "Draws"].map((outcome, i) => ({
+        label: outcome,
+        data: strategies.map(key => data[key].results[outcome]),
+        backgroundColor: ["#35bd86", "#fe4c40", "#0093ff"][i]
+    }));
+
+    if (resultsChart) resultsChart.destroy();
+
+    resultsChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: strategies.map(key => strategyLabels[key]),
+            datasets
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    ticks: { color: "#daa520", font: { family: cssFont, size: 14 }},
+                    grid: { color: "#1a4d3a", lineWdith: 2}
+                },
+                y: {
+                    title: { display: true, text: "Number of Rounds", color: "#daa520", font: { family: cssFont, size: 16 } },
+                    ticks: { color: "white", font: { family: cssFont, size: 14 }},
+                    grid: { color: "#1a4d3a", lineWdith: 2}
+                }
+            },
+            plugins: {
+                legend: { labels: { color: "white", font: {family: cssFont, size: 14}} }
+            }
+        }
+    });
+}
+
+function renderResultsTable(data) {
+    const tbody = document.querySelector("#ResultsTable tbody");
+    tbody.innerHTML = "";
+
+    for (const key of Object.keys(strategyLabels)) {
+        const r = data[key].results;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${strategyLabels[key]}</td>
+            <td>${r.Wins}</td>
+            <td>${r.Loses}</td>
+            <td>${r.Draws}</td>
+            <td>${r.Units > 0 ? "+" : ""}${r.Units}</td>
+        `;
+        const netUnitsCell = row.querySelector("td:last-child");
+        const value = r.Units;
+
+        if (value > 0) {
+            netUnitsCell.classList.add("positive");
+        } else if (value < 0) {
+            netUnitsCell.classList.add("negative");
+        } else {
+            netUnitsCell.classList.add("zero");
+        }
+
+        tbody.appendChild(row);
+    }
+}
+</script>
+</main>
+{% endblock %}

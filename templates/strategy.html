@@ -1,0 +1,135 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Strategy
+{% endblock %}
+
+{% block main%}
+
+{% set colors = {
+    "Stand": "stand",
+    "Hit": "hit",
+    "Double": "double",
+    "Split": "split"
+} %}
+<div class="strategy-info">
+    <h2>Understanding the Blackjack Optimal Strategy Table</h2>
+    <p>
+        These strategy tables serves as a comprehensive guide for making mathematically optimal decisions during a game of Blackjack.
+        The decisions are calculated based on two primary variables: the total value of the player's current hand and the specific upcard shown by the dealer.
+    </p>
+
+    <p>To use the tables effectively, hands are categorized into three distinct types:</p>
+    <ul>
+        <li>Hard Totals: Hands that do not contain an Ace, or where the Ace must be counted as 1 to avoid busting.</li>
+        <li>Soft Totals: Hands containing an Ace that can still be counted as either 1 or 11 without exceeding 21.</li>
+        <li>Pairs: Two cards of the identical rank, opening up the strategic choice of splitting the hand into two separate bets.</li>
+    </ul>
+
+    <p>
+    <p>The mathematical calculations used to generate these tables consider the following guidelines:</p>
+    <ul>
+        <li>The simulation uses a shoe containing 6 decks of cards.</li>
+        <li>The dealer hits on a soft 17.</li>
+        <li>The player is allowed to double down after a split (DAS).</li>
+        <li>Only original bets are lost in the event of a dealer blackjack.</li>
+    </ul>
+        By consistently aligning your moves with this chart, you eliminate guesswork and mitigate the house edge (the expected loss of the player),
+        ensuring you play each hand with the highest statistical advantage possible.
+    </p>
+</div>
+
+<div class="strategy-container">
+    <table class="strategy-table">
+        <colgroup>
+            <col style="width: 120px;">
+            <col span="10">
+        </colgroup>
+        <tr>
+            <th class="table-header" rowspan="2">Player<br>hand</th>
+            <th class="table-header" colspan="10">Dealer's face-up card</th>
+        </tr>
+        <tr>
+            {% for card in dealer_cards%}
+            {% if card == 11%}
+            <th>A</th>
+            {% else %}
+            <th>{{ card }}</th>
+            {% endif %}
+            {% endfor %}
+        </tr>
+        <tr><th class="table-header" colspan="11">Hard totals</th></tr>
+        {% for hard_row in hard_rows %}
+        <tr>
+            <th>{{ hard_row.hand }}</th>
+            {% for action in hard_row.actions %}
+            <td class="{{ colors[action] }}">{{ action }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+
+    <table class="strategy-table">
+        <colgroup>
+            <col style="width: 120px;">
+            <col span="10">
+        </colgroup>
+        <tr>
+            <th class="table-header" rowspan="2">Player<br>hand</th>
+            <th class="table-header" colspan="10">Dealer's face-up card</th>
+        </tr>
+        <tr>
+            {% for card in dealer_cards%}
+            {% if card == 11%}
+            <th>A</th>
+            {% else %}
+            <th>{{ card }}</th>
+            {% endif %}
+            {% endfor %}
+        </tr>
+        <tr><th class="table-header" colspan="11">Soft totals</th></tr>
+        {% for soft_row in soft_rows %}
+        <tr>
+            <th>(A, {{ soft_row.hand[1] }})</th>
+            {% for action in soft_row.actions %}
+            <td class="{{ colors[action] }}">{{ action }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+
+    <table class="strategy-table">
+        <colgroup>
+            <col style="width: 120px;">
+            <col span="10">
+        </colgroup>
+        <tr>
+            <th class="table-header" rowspan="2">Player<br>hand</th>
+            <th class="table-header" colspan="10">Dealer's face-up card</th>
+        </tr>
+        <tr>
+            {% for card in dealer_cards%}
+            {% if card == 11%}
+            <th>A</th>
+            {% else %}
+            <th>{{ card }}</th>
+            {% endif %}
+            {% endfor %}
+        </tr>
+        <tr><th class="table-header" colspan="11">Pairs</th></tr>
+        {% for pairs_row in pairs_rows %}
+        <tr>
+            {% if pairs_row.hand[0] == 11 %}
+            <th>(A, A)</th>
+            {% else %}
+            <th>{{ pairs_row.hand }}</th>
+            {% endif %}
+            {% for action in pairs_row.actions %}
+            <td class="{{ colors[action] }}">{{ action }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}
