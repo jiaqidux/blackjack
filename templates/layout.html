@@ -8,12 +8,15 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
         <link href="/static/styles.css" rel="stylesheet">
         <title>{% block title %}{% endblock %}</title>
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     </head>
 
     <body>
         <nav class="navbar">
             <div class="container-fluid">
-                <a class="navbar-brand navbar-title" href="/">Blackjack</a>
+                <a class="navbar-brand navbar-title" href="/">
+                    Blackjack
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
                 </button>

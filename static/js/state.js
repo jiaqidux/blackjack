@@ -8,8 +8,8 @@ export const state = {
     downCard: null,
     upCard: null,
     downCardElem: null,
-
     flipped: false,
+    isDealerDrawing: false,
 
     playerTotal: [0,0],
     playerAces: [0,0],
@@ -34,6 +34,9 @@ export const state = {
 
     decks: []
 }
+
+export const cardWidth = 71;
+export const cardHeight = 95;
 
 export const suits = [0,1,2,3];
 export const ranks = [...Array(13).keys()];

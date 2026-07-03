@@ -1,61 +1,8 @@
 // all changes to ui
 
-document.querySelectorAll(".chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-        if (gameState !== "betting") return;
-        let chipValue = parseInt(chip.dataset.value);
-        if (balance >= chipValue) {
-            balance -= chipValue;
-            bet += chipValue;
-            document.querySelector(".bet").textContent = `Bet:\n$${bet}`;
-            document.querySelector(".balance").textContent = `Balance:\n$${balance}`;
-        } else {
-            console.log("Not enough balance");
-        }
-    });
-});
-
-document.querySelector(".undo").addEventListener("click", () => {
-    if (bet > 0 && gameState === "betting") {
-        balance += bet;
-
-        bet = 0;
-
-        document.querySelector(".bet").textContent = `Bet:\n$${bet}`;
-        document.querySelector(".balance").textContent = `Balance:\n$${balance}`;
-    }
-});
-
-document.querySelector(".deal").addEventListener("click", () => {
-    if (bet <= 0) {
-        console.log("Invalid bet");
-        return;
-    }
-
-    gameState = "playing";
-    startGame();
-    updateUI();
-});
-
-const hintToggle = document.getElementById("hintToggle");
-hintToggle.addEventListener("click", () => {
-    hintsEnabled = !hintsEnabled;
-
-    if (hintsEnabled) {
-        hintToggle.classList.add("active");
-        hintToggle.innerText = "Hints: ON";
-        if (gameState === "playing") updateActionHints();
-    } else {
-        hintToggle.classList.remove("active");
-        hintToggle.innerText = "Hints: OFF";
-        clearIlluminatedButtons();
-    }
-});
-
-document.querySelector(".hit").addEventListener("click", hit);
-document.querySelector(".stand").addEventListener("click", stand);
-document.querySelector(".double").addEventListener("click", double);
-document.querySelector(".split").addEventListener("click", split);
+import { state, cardWidth, cardHeight } from "./state.js";
+import { getValue } from "./deck.js";
+import { updateActionHints } from "./hints.js"; // Asegúrate de importar updateActionHints si se ejecuta aquí
 
 export function createCard(suit, rank, faceDown=false) {
     // we create the card with front and back
@@ -94,20 +41,19 @@ export function updateUI() {
     const splitButton = document.querySelector(".split");
     const doubleButton = document.querySelector(".double");
 
-    if (gameState === "playing") {
+    if (state.gameState === "playing") {
         dealCont.style.display = "none";
         actionCont.style.visibility = "visible";
-        updateActionHints();
 
         // only show split button if hand can split
-        if (playerCard1.rank === playerCard2.rank && canSplit && !isSplit && activeHand === 0) {
+        if (state.playerCard1 && state.playerCard2 && state.playerCard1.rank === state.playerCard2.rank && state.canSplit && !state.isSplit && state.activeHand === 0) {
             splitButton.style.display = "inline-block";
         } else {
             splitButton.style.display = "none";
         }
 
-        //  hide double button if not enough balance
-        if (balance >= bet) {
+        //  hide double button if not enough state.balance
+        if (state.balance >= state.bet) {
             doubleButton.style.display = "inline-block";
         } else {
             doubleButton.style.display = "none";
@@ -116,7 +62,7 @@ export function updateUI() {
         actionCont.style.visibility = "hidden";
         splitButton.style.display = "none";
 
-        if (gameState === "betting") {
+        if (state.gameState === "betting") {
             dealCont.style.display = "flex";
         } else {
             dealCont.style.display = "none";
@@ -130,22 +76,22 @@ export function updateTotalUI() {
     const titleHand1 = document.querySelector(".title-hand-1");
     const hand1Container = document.querySelector(".player-hand-1-container");
 
-    if (!flipped) {
-        dealerHeader.textContent = `Dealer: ${getValue(upCard)}`;
+    if (!state.flipped) {
+        dealerHeader.textContent = `Dealer: ${getValue(state.upCard)}`;
     } else {
-        dealerHeader.textContent = `Dealer: ${dealerTotal}`;
+        dealerHeader.textContent = `Dealer: ${state.dealerTotal}`;
     }
 
-    if (!isSplit) {
-        titleHand0.textContent = `Player: ${playerTotal[0]}`;
+    if (!state.isSplit) {
+        titleHand0.textContent = `Player: ${state.playerTotal[0]}`;
         hand1Container.setAttribute("hidden", "true");
     } else {
         hand1Container.removeAttribute("hidden");
-        let showArrow1 = (gameState === "playing" && activeHand === 0) ? "  ❮❮" : "";
-        let showArrow2 = (gameState === "playing" && activeHand === 1) ? "  ❮❮" : "";
+        let showArrow1 = (state.gameState === "playing" && state.activeHand === 0) ? "  ❮❮" : "";
+        let showArrow2 = (state.gameState === "playing" && state.activeHand === 1) ? "  ❮❮" : "";
 
-        titleHand0.textContent = `Hand 1: ${playerTotal[0]}${showArrow1}`;
-        titleHand1.textContent = `Hand 2: ${playerTotal[1]}${showArrow2}`;
+        titleHand0.textContent = `Hand 1: ${state.playerTotal[0]}${showArrow1}`;
+        titleHand1.textContent = `Hand 2: ${state.playerTotal[1]}${showArrow2}`;
     }
 }
 
@@ -158,27 +104,27 @@ export function showMessage(text) {
 export function displayResult(index) {
     let multiplier = 0;
     let message;
-    if (playerTotal[index] > 21) {
+    if (state.playerTotal[index] > 21) {
         message = "You lost";
-    } else if (dealerTotal > 21) {
+    } else if (state.dealerTotal > 21) {
         message = "You won!"
         multiplier = 2;
-    } else if (playerTotal[index] === dealerTotal) {
+    } else if (state.playerTotal[index] === state.dealerTotal) {
         message = "Draw"
         multiplier = 1;
-    } else if (playerTotal[index] > dealerTotal) {
+    } else if (state.playerTotal[index] > state.dealerTotal) {
         message = "You won!"
         multiplier = 2;
     } else {
         message = "You lost"
     }
 
-    let prefix = isSplit ? `Hand ${index + 1}: ` : "";
+    let prefix = state.isSplit ? `Hand ${index + 1}: ` : "";
     showMessage(prefix + message);
 
-    let handStake = handDoubled[index] ? bet * 2 : bet;
-    balance += multiplier * handStake;
-    document.querySelector(".balance").textContent = `Balance:\n$${balance}`;
+    let handStake = state.handDoubled[index] ? state.bet * 2 : state.bet;
+    state.balance += multiplier * handStake;
+    document.querySelector(".balance").textContent = `Balance:\n$${state.balance}`;
 }
 
 export function reset() {
@@ -190,11 +136,11 @@ export function reset() {
     document.querySelector(".dealer-container").style.visibility = "hidden";
     document.querySelector(".player-container").style.visibility = "hidden";
 
-    bet = 0;
-    document.querySelector(".bet").textContent = `Bet:\n$${bet}`;
-    document.querySelector(".balance").textContent = `Balance:\n$${balance}`;
+    state.bet = 0;
+    document.querySelector(".bet").textContent = `Bet:\n$${state.bet}`;
+    document.querySelector(".balance").textContent = `Balance:\n$${state.balance}`;
 
-    gameState = "betting";
+    state.gameState = "betting";
     updateUI();
 }
 

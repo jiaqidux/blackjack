@@ -42,7 +42,6 @@ class Deck:
         return self.cards.pop()
 
 
-
 def hand_info(cards):
     total = 0
     aces = 0
@@ -58,8 +57,8 @@ def hand_info(cards):
 
     return (total, aces)  # we only consider aces those with value 11
 
-# blackjack dealer rule: Draw a card if <= 16, stop if >= 17
 
+# blackjack dealer rule: Draw a card if <= 16, stop if >= 17
 def dealer_prob(total, aces, current_prob, results):
     if total > 17 or (total == 17 and aces == 0): # Dealer hits on soft 17
         if total > 21:
@@ -93,6 +92,7 @@ def next_state(total, aces, card_value):
         new_aces -= 1
 
     return new_total, new_aces
+
 
 @cache
 def compare_stand(total, dealer_card):
@@ -180,7 +180,7 @@ def random_strategy(total, aces, dealer_card, num_cards, pair_card, can_split):
 
 
 def dealer_strategy(total, aces, dealer_card, num_cards=None, pair_card=None, can_split=False):
-    if total >= 17:
+    if total >= 17 or (total == 17 and aces == 0):
         return "Stand"
     else:
         return "Hit"

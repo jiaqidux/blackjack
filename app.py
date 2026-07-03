@@ -70,8 +70,8 @@ def simulate():
     except (TypeError, ValueError):
         return jsonify({"error": "N must be greater than 0"}), 400
 
-    if N < 1 or N > 20000:
-        return jsonify({"error": "N must be in the range 1-200000"}), 400
+    if N < 1 or N > 100000:
+        return jsonify({"error": "N must be in the range 1-100000"}), 400
 
     optimal_data = simulator(N, optimal_strategy)
     random_data = simulator(N, random_strategy)
@@ -95,4 +95,7 @@ def simulate():
 @app.route("/run_simulator")
 def run_simulator():
     return render_template("simulator.html")
+
+if __name__ == "__main__":
+    app.run(debug=True)
 

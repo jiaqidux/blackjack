@@ -1,0 +1,36 @@
+import { state } from "./state.js";
+
+import { getValue } from "./deck.js";
+
+import { clearIlluminatedButtons } from "./ui.js";
+
+export async function updateActionHints() {
+    clearIlluminatedButtons();
+    if (!state.hintsEnabled || state.gameState !== "playing") return;
+
+    const currentTotal = state.playerTotal[state.activeHand];
+    const currentAces = state.playerAces[state.activeHand];
+    const dealerCardValue = getValue(state.upCard);
+
+    let isPair = false;
+    let pairValue = 0;
+    if (!state.isSplit && state.playerCard1 && state.playerCard2) {
+        isPair = (state.playerCard1.rank === state.playerCard2.rank);
+        pairValue = getValue(state.playerCard1);
+    }
+
+    try {
+        const response = await fetch(`/get_hint?player_total=${currentTotal}&player_aces=${currentAces}&dealer_card=${dealerCardValue}&is_pair=${isPair}&pair_value=${pairValue}`);
+        const data = await response.json();
+
+        if (data.hint) {
+            const action = data.hint.toLowerCase(); // e.g. "hit"
+            const targetButton = document.getElementById(`${action}Button`);
+            if (targetButton && targetButton.style.display !== "none") {
+                targetButton.classList.add("illuminated");
+            }
+        }
+    } catch (err) {
+        console.error("Error fetching optimal hint:", err);
+    }
+}

@@ -1,31 +1,36 @@
-// to build decks 
+// to build decks
 
 import { state, suits, ranks } from "./state.js";
 
 export function createDecks() {
-    decks.length = 0; // to empty actual decks
+    state.decks.length = 0; // to empty actual decks
+
     for (let i = 0; i < 6; i++) {
         for (let suit of suits) {
             for (let rank of ranks) {
-                decks.push({rank, suit});
+                state.decks.push({ rank, suit });
             }
         }
     }
-    return decks;
+
+    return state.decks;
 }
 
 export function shuffle() {
-    for (let i = 0; i < decks.length; i++) {
+    for (let i = 0; i < state.decks.length; i++) {
         let j = Math.floor(Math.random() * (i + 1));
-        let temp = decks[i];
-        decks[i] = decks[j];
-        decks[j] = temp;
-        // [decks[i], decks[j]] = [decks[j], decks[i]];
+
+        let temp = state.decks[i];
+        state.decks[i] = state.decks[j];
+        state.decks[j] = temp;
+
+        // [state.decks[i], state.decks[j]] = [state.decks[j], state.decks[i]];
     }
 }
 
 export function getValue(card) {
     let rank = card.rank;
+
     if (rank === 12) {
         return 11;
     }
@@ -41,6 +46,7 @@ export function getAces(card) {
     if (card.rank === 12) {
         return 1;
     }
+
     return 0;
 }
 
@@ -49,5 +55,6 @@ export function reduceAces(total, aces) {
         total -= 10;
         aces -= 1;
     }
+
     return [total, aces];
 }

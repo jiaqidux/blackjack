@@ -12,22 +12,28 @@ import {
     clearIlluminatedButtons
 } from "./ui.js";
 
+import { updateActionHints } from "./hints.js";
+
+import { dealToHand } from "./actions.js";
+
+import { sleep } from "./utils.js";
+
+
 export function startGame() {
     // reset everything
-    dealerTotal = 0;
-    dealerAces = 0;
-    flipped = false;
-    playerTotal = [0, 0];
-    playerAces = [0, 0];
-    canSplit = true;
-    isSplit = false;
-    activeHand = 0;
-    showingHand = 0;
-    handDoubled = [false, false];
+    state.dealerTotal = 0;
+    state.dealerAces = 0;
+    state.flipped = false;
+    state.playerTotal = [0, 0];
+    state.playerAces = [0, 0];
+    state.canSplit = true;
+    state.isSplit = false;
+    state.handDoubled = [false, false];
+    state.activeHand = 0;
+    state.showingHand = 0;
 
     document.querySelector(".dealer-container").style.visibility = "visible";
     document.querySelector(".player-container").style.visibility = "visible";
-
 
     document.querySelector(".player-hand-1-container").setAttribute("hidden", "true");
     document.querySelector(".title-hand-0").textContent = "Player: 0";
@@ -37,83 +43,114 @@ export function startGame() {
     document.querySelector(".player-hand-1").innerHTML = "";
 
     // if we have less than one deck, we add more cards
-    if (decks.length < 52) {
-        decks = createDecks();
+    if (state.decks.length < 52) {
+        createDecks();
         shuffle();
     }
 
     // deal dealer's cards
-    downCard = decks.pop();
-    upCard = decks.pop();
-    dealerTotal += getValue(upCard);
-    dealerAces += getAces(upCard);
+    state.downCard = state.decks.pop();
+    state.upCard = state.decks.pop();
 
-    downCardElem = createCard(downCard.suit, downCard.rank, true);
-    document.querySelector(".dealer-hand").append(downCardElem);
-    document.querySelector(".dealer-hand").append(createCard(upCard.suit, upCard.rank));
+    state.dealerTotal += getValue(state.upCard);
+    state.dealerAces += getAces(state.upCard);
+
+    state.downCardElem = createCard(state.downCard.suit, state.downCard.rank, true);
+    document.querySelector(".dealer-hand").append(state.downCardElem);
+    document.querySelector(".dealer-hand").append(createCard(state.upCard.suit, state.upCard.rank));
 
     // deal player's cards
-    playerCard1 = decks.pop();
-    playerCard2 = decks.pop();
-    dealToHand(playerCard1, 0);
-    dealToHand(playerCard2, 0);
+    state.playerCard1 = state.decks.pop();
+    state.playerCard2 = state.decks.pop();
 
-    if (dealerTotal + getValue(downCard) == 21) {
-    endGame();
-    return;
+    dealToHand(state.playerCard1, 0);
+    dealToHand(state.playerCard2, 0);
+
+    if (state.dealerTotal + getValue(state.downCard) == 21) {
+        endGame();
+        return;
     }
 
-    // if player is 21, its either draw or win
+    // if player is 21, it's either draw or win
     // since we peeked and the game continued, it means it's not draw, so it must be win
-    if (playerTotal[0] == 21) {
+    if (state.playerTotal[0] == 21) {
         updateUI();
         endGame();
         return;
     }
 
     updateUI();
+    updateActionHints();
     updateTotalUI();
 }
 
 export async function dealerPlay() {
-    downCardElem.querySelector('.card-inner').style.transform = "rotateY(0deg)";
-    flipped = true;
-    dealerTotal += getValue(downCard);
-    dealerAces += getAces(downCard);
-    [dealerTotal, dealerAces] = reduceAces(dealerTotal, dealerAces);
+    state.isDealerDrawing = true;
+    state.downCardElem.querySelector(".card-inner").style.transform = "rotateY(0deg)";
+    state.flipped = true;
+
+    state.dealerTotal += getValue(state.downCard);
+    state.dealerAces += getAces(state.downCard);
+
+    [state.dealerTotal, state.dealerAces] = reduceAces(
+        state.dealerTotal,
+        state.dealerAces
+    );
+
     updateTotalUI();
 
-    let allBusted = isSplit ? (playerTotal[0] > 21 && playerTotal[1] > 21) : (playerTotal[0] > 21);
+    let allBusted = state.isSplit
+        ? (state.playerTotal[0] > 21 && state.playerTotal[1] > 21)
+        : (state.playerTotal[0] > 21);
+
     if (!allBusted) {
-        // dealer hits on soft ace
-        while (dealerTotal < 17 || (dealerTotal === 17 && dealerAces > 0)) {
+        // dealer hits on soft 17
+        while (state.dealerTotal < 17 || (state.dealerTotal === 17 && state.dealerAces > 0)) {
             await sleep(750);
-            
-            let card = decks.pop();
-            dealerTotal += getValue(card);
-            dealerAces += getAces(card);
-            [dealerTotal, dealerAces] = reduceAces(dealerTotal, dealerAces);
+
+            let card = state.decks.pop();
+
+            state.dealerTotal += getValue(card);
+            state.dealerAces += getAces(card);
+
+            [state.dealerTotal, state.dealerAces] = reduceAces(
+                state.dealerTotal,
+                state.dealerAces
+            );
+
             document.querySelector(".dealer-hand").append(createCard(card.suit, card.rank));
 
             updateTotalUI();
         }
     }
-
-    return dealerTotal;
+    state.isDealerDrawing = false;
+    return state.dealerTotal;
 }
 
 export async function endGame() {
-    await dealerPlay();
-    showingHand = 0;
-
-    if (isSplit) {
-        gameState = "showing_results";
+    if (state.isSplit) {
+        state.gameState = "showing_results";
     } else {
-        gameState = "gameover";
+        state.gameState = "gameover";
     }
 
     updateUI();
     updateTotalUI();
     clearIlluminatedButtons();
-    displayResult(showingHand);
+
+    await dealerPlay();
+
+    state.showingHand = 0;
+
+    if (state.isSplit) {
+        state.gameState = "showing_results";
+    } else {
+        state.gameState = "gameover";
+    }
+
+    updateUI();
+    updateActionHints();
+    updateTotalUI();
+    clearIlluminatedButtons();
+    displayResult(state.showingHand);
 }
