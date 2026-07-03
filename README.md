@@ -38,7 +38,7 @@ To run this application on your local machine, follow these setup steps:
 
 ---
 
-## The Mathematical Core
+## Python Backend: The Mathematical Enginal
 
 The heart of the project relies on probability theory and dynamic programming implemented in Python to resolve the optimal path through any given blackjack hand. The system evaluates the EV of every possible decision to prove that adhering to mathematically optimal play minimizes long-term losses compared to arbitrary or dealer-mimicking strategies.
 
@@ -61,9 +61,8 @@ The `calculate_ev` function determines the mathematical value of hitting, standi
 
 Because these functions call each other recursively and the same states recur often, caching ensures any given state is computed exactly once and reused, making the calculation tractable rather than exponential. Finally, `optimal_strategy` compares the four actions and selects the specific string label matching the maximum value.
 
----
 
-## The Monte Carlo Simulator
+### The Monte Carlo Simulator
 
 To prove the strategy tables work, the `simulator(N, strategy)` function plays N automated rounds.
 
