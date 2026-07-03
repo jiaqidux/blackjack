@@ -5,13 +5,8 @@
 ---
 
 ## Description
+This project is a comprehensive web application that functions as a playable Blackjack game, an optimal strategy calculator, and a Monte Carlo strategy simulator. Built using Python for the computational backend, Flask for the web server, and a modular HTML, CSS, and JavaScript architecture for the frontend, it demonstrates the underlying mathematics of casino blackjack. The application evaluates the Expected Value (EV) of every possible decision to prove that adhering to mathematically optimal play minimizes long-term losses compared to arbitrary or dealer-mimicking strategies.
 
-This project is a comprehensive full-stack web application that combines an interactive, playable game of Blackjack with a mathematical backend capable of computing the game's optimal strategy from first principles. Built using Python for the computational backend, Flask for the web server, and a modular HTML, CSS, and vanilla JavaScript architecture for the frontend, it demonstrates the underlying probability theory of casino blackjack. 
-
-The application consists of three integrated components driven by the exact same underlying probability calculations:
-* A playable Blackjack table featuring an optional, real-time hint system.
-* A dynamic strategy matrix page showing the mathematically optimal action for every possible hand combination.
-* A Monte Carlo simulation platform that executes thousands of automated rounds under different strategy profiles and visualizes comparative performance analytics using Chart.js.
 
 ---
 
@@ -48,14 +43,14 @@ To run this application on your local machine, follow these setup steps:
 The heart of the project relies on probability theory and dynamic programming implemented in Python to resolve the optimal path through any given blackjack hand. The system evaluates the Expected Value (EV) of every possible decision to prove that adhering to mathematically optimal play minimizes long-term losses compared to arbitrary or dealer-mimicking strategies.
 
 ### Dealer Probability Distribution
-The `dealer_prob` function uses recursion to calculate the exact probability of every possible final state the dealer can reach (17, 18, 19, 20, 21, or bust) based on their single visible upcard. Because the dealer follows a fixed casino rule (draw on 16 or less, and hit on a soft 17), the function explores every path the dealer's hand can take. 
+The `dealer_prob` function uses recursion to calculate the exact probability of every possible final state the dealer can reach (17, 18, 19, 20, 21, or bust) based on their single visible upcard. The function explores every possible card draw, multiplying the current probability by the probability of the newly drawn card, accumulating these values into a dictionary. It strictly adheres to the rule that the dealer must hit on a soft 17. The recursive tree terminates when a final resting state is achieved.
 
-At each step, it considers every next card draw under an infinite-deck assumption, meaning each rank has a fixed probability, with 10-valued cards four times as likely as any other rank. For each card, it computes the new total, demotes an ace from 11 to 1 if the hand would otherwise bust, multiplies the running probability by that card's probability, and recurses. When a terminal state is reached, the accumulated probability is added to a results dictionary, forming a weighted tree search that terminates because the dealer's total strictly increases and is bounded above.
 
 ### Expected Value and Conditional Probability
 The `compare_stand` function calculates the Expected Value (EV) of choosing to stand on a given total against a given dealer upcard, measured in bet units where a win pays +1, a loss costs -1, and a push pays 0. 
 
-A critical component of this calculation is handling the dealer blackjack peek rule. If the dealer upcard is an Ace or a 10-value card, the dealer checks the hidden hole card before the player acts, ending the hand immediately if it completes a blackjack. If the game continues to the player's turn, it mathematically guarantees the dealer does not have Blackjack. To model this accurately, the function excludes the corresponding hole cards from the initial distribution and renormalizes the remaining probabilities, applying conditional probability to ensure perfect analytical precision.
+A critical component of this calculation is handling the dealer peeking rule. If the dealer upcard is an Ace or a 10-value card, they check their hidden card for a Blackjack before the player acts. If the game continues to the player's turn, it mathematically guarantees the dealer does not have Blackjack. The code filters out the corresponding cards (removing 10s if the upcard is an Ace, and removing Aces if the upcard is a 10) and recalculates the relative probabilities in the adjusted_prob dictionary, ensuring perfect accuracy.
+
 
 ### Dynamic Programming for Optimal Play
 The `calculate_ev` function determines the mathematical value of hitting, standing, doubling, and splitting. It applies recursion with memoization via Python's `@cache` decorator to traverse the entire decision tree. 
@@ -68,17 +63,15 @@ Because these functions call each other recursively and the same states recur of
 
 ---
 
-## Simulating Strategies
+## The Monte Carlo Simulator
 
-To confirm that the analytically computed strategy performs better in practice, the project includes a `simulator(N, strategy)` function, which plays N complete automated rounds using a given strategy profile and records the running history.
+To prove the strategy tables work, the `simulator(N, strategy)` function plays N automated rounds.
 
-The simulation engine manages a full six-deck shoe, tracking deck penetration and reshuffling automatically when cards run low. It handles every branch of live play, including hitting, doubling down, and splitting. Splitting is resolved using a queue system (`hands_to_play`) to process split hands sequentially against the same dealer hand, allowing split branches to be hit further and evaluated independently.
+* It initializes a 6-deck shoe and handles deck penetration, reshuffling only when cards run out.
+*It iterates through hands using a queue system (hands_to_play), which efficiently handles split hands by appending newly split branches to the queue for sequential evaluation.
+*It applies the injected strategy function to make decisions, tracking doubles and busts.
+*Finally, it triggers the dealer's drawing rules and compares totals, keeping a running tally of net units (bankroll performance). It returns a detailed history array used for visualization.
 
-Net profit or loss is tracked in bet units rather than currency, keeping results independent of stake size. Two alternative strategies were implemented for baseline comparison:
-* A random strategy that chooses uniformly among legal actions.
-* A naive dealer-style strategy that hits on any total below 17 and stands otherwise.
-
-Running all three profiles over thousands of rounds confirms empirically that the analytically computed strategy minimizes long-run losses, even though it does not eliminate the house edge entirely.
 
 ---
 
@@ -93,7 +86,6 @@ The server features distinct architectural choices for routing:
 * The `/run_simulator` endpoint acts as a template renderer, serving the static HTML interface where the user sets up simulation parameters.
 * The `/simulate` endpoint functions as a RESTful JSON API. It accepts the user's N parameter, validates it to prevent server crashes, invokes the simulation engine three times (optimal, dealer, and random strategies), and packages the comparative tracking arrays into a single JSON response.
 
-The templates leverage Jinja2 inheritance and loops. `layout.html` defines a shared navbar shell, `strategy.html` is generated by nested loops over precomputed rows with CSS classes for action color-coding, and `simulator.html` embeds the JavaScript charting logic.
 
 ---
 
