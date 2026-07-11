@@ -142,6 +142,7 @@ export function split() {
             endGame();
             return;
         }
+        updateTotalUI();
     }
 
     updateUI();
