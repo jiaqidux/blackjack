@@ -151,13 +151,6 @@ export async function endGame() {
     // always show hand 0's result first
     state.showingHand = 0;
 
-    // re-set gameState since dealerPlay() was async and state could've been read elsewhere in between
-    if (state.isSplit) {
-        state.gameState = "showing_results";
-    } else {
-        state.gameState = "gameover";
-    }
-
     updateUI();
     updateActionHints();
     updateTotalUI();

@@ -2,7 +2,6 @@
 
 import { state, cardWidth, cardHeight } from "./state.js";
 import { getValue } from "./deck.js";
-import { updateActionHints } from "./hints.js"; 
 
 export function createCard(suit, rank, faceDown=false) {
     // we create the card with front and back
@@ -55,8 +54,13 @@ export function updateUI() {
             splitButton.style.display = "none";
         }
 
+        // only show double if enough balance and hand still has just its initial 2 cards
+        const handSelector = state.isSplit ? `.player-hand-${state.activeHand}` : `.player-hand-0`;
+        const handCardCount = document.querySelector(handSelector).children.length;
+
+
         //  hide double button if not enough state.balance
-        if (state.balance >= state.bet) {
+        if (state.balance >= state.bet && handCardCount === 2) {
             doubleButton.style.display = "inline-block";
         } else {
             doubleButton.style.display = "none";
