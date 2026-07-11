@@ -28,7 +28,7 @@ export async function updateActionHints() {
     }
 
     try {
-        const response = await fetch(`/get_hint?player_total=${currentTotal}&player_aces=${currentAces}&dealer_card=${dealerCardValue}&is_pair=${isPair}&pair_value=${pairValue}`);
+        const response = await fetch(`/get_hint?player_total=${currentTotal}&player_aces=${currentAces}&dealer_card=${dealerCardValue}&is_pair=${isPair}&pair_value=${pairValue}&num_cards=${numCards}`);
         const data = await response.json();
 
         if (data.hint) {
