@@ -49,7 +49,7 @@ To actually test whether all this math holds up, `simulator(N, strategy)` plays 
 To avoid doing all that expensive recursive math on every single page load, the three main strategy charts (Hard Totals, Soft Totals, and Pairs) are calculated once, right when the server starts up, and just reused after that.
 
 A few routing choices worth calling out:
-* `/get_hint` calls `optimal_strategy` directly with whatever the player's hand actually looks like right now, sent as query parameters — since a real hand in progress can end up in situations the static strategy chart doesn't cover.
+* `/get_hint` calls `optimal_strategy` directly with whatever the player's hand actually looks like right now, sent as query parameters, since a real hand in progress can end up in situations the static strategy chart doesn't cover.
 * `/run_simulator` just renders the page where you set up a simulation.
 * `/simulate` is a proper JSON API: it takes in how many rounds you want (`N`), checks that it's a reasonable number, runs the simulation three times (optimal, dealer-style, and random), and sends back all three results together so the frontend can compare them.
 
